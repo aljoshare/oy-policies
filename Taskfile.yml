@@ -1,0 +1,26 @@
+version: "3"
+
+tasks:
+  default:
+    desc: Run all OPA tests
+    deps: [test]
+
+  test:
+    desc: Run all Rego unit tests
+    cmds:
+      - opa test .
+
+  test:verbose:
+    desc: Run Rego unit tests with verbose output
+    cmds:
+      - opa test -v .
+
+  fmt:
+    desc: Format all Rego files
+    cmds:
+      - opa fmt --write .
+
+  check:
+    desc: Check Rego files for syntax errors without running tests
+    cmds:
+      - opa check .
