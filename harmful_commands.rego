@@ -75,6 +75,7 @@ deny contains msg if {
 		"/etc/rc.local",
 	]
 	pattern := patterns[_]
+
 	# Only flag if combined with an HTTP/shell/write action nearby
 	contains(lower(input.content), pattern)
 	write_or_net := ["curl", "wget", "echo >>", "tee -a", ">>", "write", "append", "install"]
