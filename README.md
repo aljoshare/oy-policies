@@ -96,9 +96,20 @@ package oy
 import rego.v1
 ```
 
+**METADATA** (required on every rule) — `oy` skips any `deny` rule that lacks a `# METADATA` block with a `title` and prints a warning to stderr. The `description` field is optional but recommended; it appears in `oy list` output.
+
+```rego
+# METADATA
+# title: My Rule Title
+# description: One-line description of what this rule detects.
+```
+
 **Violation rule** — `msg` in `deny contains msg` is unified with the value assigned inside the rule body:
 
 ```rego
+# METADATA
+# title: My Rule Title
+# description: Detects pattern one and pattern two in agent files.
 deny contains msg if {
     patterns := [
         "pattern one",
