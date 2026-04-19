@@ -18,7 +18,7 @@ tasks:
   fmt:
     desc: Format all Rego files
     cmds:
-      - opa fmt --write --ignore .github .
+      - opa fmt --write .
 
   check:
     desc: Check Rego files for syntax errors without running tests
