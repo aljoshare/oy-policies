@@ -14,6 +14,8 @@ Official policy collection for [oy](https://github.com/aljoshare/oy) — a CLI t
 | Workflow | Trigger | What it does |
 |---|---|---|
 | `fmt.yml` | push / PR | Runs `opa fmt --fail .` — fails if any `.rego` file is not formatted |
+| `test.yml` | push / PR | Runs `opa test .` — fails if any Rego unit test fails |
+| `secrets.yml` | push / PR | Runs Gitleaks — fails if secrets are detected in the repository history |
 
 ## Requirements
 
