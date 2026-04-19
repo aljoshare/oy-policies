@@ -22,4 +22,4 @@ jobs:
           version: latest
 
       - name: Check formatting
-        run: opa fmt --fail .
+        run: opa fmt --fail --ignore .github .
