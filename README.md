@@ -1,5 +1,7 @@
 # oy-policies
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/aljoshare/oy-policies/badge)](https://scorecard.dev/viewer/?uri=github.com/aljoshare/oy-policies)
+
 Official policy collection for [oy](https://github.com/aljoshare/oy) — a CLI tool that scans Markdown files for harmful or malicious instructions using OPA Rego policies. These policies are purpose-built for the Markdown files that define AI agent behavior:
 
 - **Skills** — `.claude/skills/*/SKILL.md` and equivalent files loaded by agents at runtime
