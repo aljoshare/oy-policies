@@ -7,6 +7,12 @@ Official policy collection for [oy](https://github.com/aljoshare/oy) — a CLI t
 - **Agent specs** — `AGENT.md` and project-level agent configuration files
 - **Agent.md files** — `CLAUDE.md`, `AGENTS.md`, and other root-level AI instruction files
 
+## CI
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `fmt.yml` | push / PR | Runs `opa fmt --fail .` — fails if any `.rego` file is not formatted |
+
 ## Requirements
 
 - [oy](https://github.com/aljoshare/oy) — to use these policies for scanning
