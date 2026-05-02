@@ -61,6 +61,28 @@ oy repo list
 | `social_engineering.rego` | Classic phishing patterns, agent-targeted urgency/authority framing (OWASP LLM Top 10 2025, Lakera research), false-context misdirection (sandbox framing) |
 | `tool_poisoning.rego` | Tool/skill invocation abuse (bash, file write, HTTP, browser tools), MCP tool poisoning via hidden HTML comments — Invariant Labs found 5.5% of public MCP servers contain poisoned metadata (2025) |
 
+## Research
+
+The `research/` directory contains findings from the security research pipeline that inform policy development. It is organized thematically to mirror the structure of the Rego policy files:
+
+| File | Focus | Status |
+|---|---|---|
+| `SUMMARY.md` | Executive summary of all findings, priorities, and recommendations | Updated regularly |
+| `prompt_injection_instruction_override.md` | Instruction override attacks (GitHub Actions, leetspeak obfuscation) | Active |
+| `prompt_injection_unicode.md` | Invisible Unicode injection (GlassWorm, zero-width characters) | Active |
+| `prompt_injection_memory_poisoning.md` | Context/memory poisoning attacks | Template |
+| `prompt_injection_emerging.md` | Novel attack vectors (Prompt Injection 2.0, multimodal, in-paper) | Active |
+| `jailbreak_decode_execute.md` | Decode-and-execute attacks (FlipAttack, base64 encoding) | Active |
+| `jailbreak_personas.md` | Jailbreak personas (DAN/AIM/BISH/STAN) | Template |
+| `jailbreak_hypothetical.md` | Hypothetical framing attacks | Template |
+| `exfiltration_prompt_based.md` | Prompt-based data exfiltration | Template |
+| `tool_poisoning.md` | MCP tool poisoning, hidden instruction attacks | Active |
+| `social_engineering_prompts.md` | OWASP LLM Top 10, authority/urgency framing | Active |
+
+**Research Workflow**: A security research agent follows `PIPELINE.md` to monitor sources (arXiv, OWASP, industry blogs, GitHub), triage findings, and document them with pattern signatures and Rego rule suggestions. See `PIPELINE.md` for details on the agent's operation.
+
+**Contributing Research**: Add new findings to the appropriate thematic file. Each entry should include: Type, Source, Date, Authors, Summary, Pattern Signatures, Real-World Examples, Mitigation Recommendations, and Rego Rule Suggestions.
+
 ## Running tests
 
 Each policy file has a companion `*_test.rego` with [OPA unit tests](https://www.openpolicyagent.org/docs/latest/policy-testing/).
