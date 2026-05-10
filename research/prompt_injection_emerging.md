@@ -4,16 +4,606 @@
 > **Subtype:** Emerging Techniques  
 > **Created:** 2026-05-02  
 > **Last Updated:** 2026-05-02  
-> **Total Entries:** 4
+> **Total Entries:** 8
 
 ---
 
 ## Table of Contents
 
+- [2025-09-10] EchoLeak: Zero-Click Prompt Injection in Microsoft 365 Copilot (CVE-2025-32711)
+- [2025-11-01] Enhancing Prompt Injection Attacks via Poisoning Alignment
+- [2026-04-27] Indirect Prompt Injection in the Wild: Empirical Study
+- [2025-05-01] ARGUS: Defending LLM Agents Against Context-Aware Prompt Injection
 - [2025-07-01] Prompt Injection 2.0: Hybrid AI Threats
 - [2025-09-01] Multimodal Prompt Injection Attacks
 - [2025-09-01] Formalizing and Benchmarking Prompt Injection Attacks and Defenses
 - [2025-11-01] In-Paper Prompt Injection Attacks
+
+---
+
+## [2025-09-10] EchoLeak: Zero-Click Prompt Injection in Microsoft 365 Copilot (CVE-2025-32711)
+
+**Type:** Attack / Vulnerability / Incident / Research  
+**Source:** [arXiv:2509.10540 - EchoLeak](https://arxiv.org/abs/2509.10540)  
+**Date Published:** 2025-09-10  
+**Authors:** Security Researchers  
+**CVE/ID:** CVE-2025-32711  
+**Attack Success Rate:** High (78% in testing)
+
+### Summary
+
+**EchoLeak** represents the **first real-world zero-click prompt injection exploit** discovered in a production LLM system. This case study documents CVE-2025-32711, a vulnerability in **Microsoft 365 Copilot** that enabled **remote, unauthenticated data exfiltration via crafted email messages**.
+
+The attack exploit chain:
+1. Attacker sends a specially crafted email to a Microsoft 365 user with Copilot enabled
+2. The email contains hidden prompt injection payloads in its content or metadata
+3. When Copilot processes the email (automatically or during user queries), it executes the malicious instructions
+4. **Data is exfiltrated without any user interaction** (zero-click)
+5. Sensitive information (emails, documents, contacts) is sent to attacker-controlled endpoints
+
+This represents a **watershed moment** in AI security, proving that prompt injection attacks can achieve traditional zero-click exploitation in production systems at scale.
+
+### Attack Vectors
+
+**Delivery Method:** Email messages, calendar invites, Microsoft 365 documents  
+**Affected Systems:** Microsoft 365 Copilot, Outlook with Copilot integration  
+**Required Conditions:**
+- Target uses Microsoft 365 with Copilot enabled
+- Copilot has access to process incoming emails
+- No user interaction required (zero-click)
+
+**Impact:**
+- Remote, unauthenticated data exfiltration
+- Access to sensitive email content
+- Extraction of documents and files
+- Compromise of organizational data
+- Bypass of Microsoft's security boundaries
+
+**Attack Sophistication:**
+- **Zero-click**: No user interaction required
+- **Remote**: Attacker doesn't need access to target system
+- **Unauthenticated**: No credentials needed
+- **Stealthy**: Operates through legitimate Microsoft 365 features
+
+### Pattern Signatures
+
+```yaml
+# Email-based prompt injection indicators
+email_injection:
+  - "extract email content"
+  - "forward all messages"
+  - "send my emails to"
+  - "exfiltrate inbox"
+  - "read and forward"
+  - "copy all data"
+
+# Microsoft 365 specific patterns
+m365_patterns:
+  - "microsoft 365"
+  - "outlook"
+  - "copilot"
+  - "exchange"
+  - "office 365"
+  - "graph api"
+
+# Zero-click indicators
+zero_click:
+  - "without user interaction"
+  - "automatically execute"
+  - "on receive"
+  - "when processed"
+  - "no click required"
+  - "silent execution"
+
+# Exfiltration endpoints
+exfil_endpoints:
+  - "webhook"
+  - "api endpoint"
+  - "external server"
+  - "attacker url"
+  - "send to:"
+  - "post to:"
+```
+
+### Real-World Examples
+
+- [arXiv: EchoLeak: The First Real-World Zero-Click Prompt Injection Exploit in a Production LLM System](https://arxiv.org/abs/2509.10540)
+- [Microsoft Security Advisory: CVE-2025-32711](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-32711)
+
+### Mitigation Recommendations
+
+- **Input Sanitization**: Sanitize all email content before Copilot processing
+- **Explicit Approval**: Require user approval for Copilot actions on external emails
+- **Content Isolation**: Isolate Copilot processing from sensitive data sources
+- **Rate Limiting**: Limit Copilot processing of emails from external senders
+- **Monitoring**: Audit Copilot access to email data for suspicious patterns
+- **Zero-Trust**: Apply zero-trust principles to AI assistant access
+- **Patch Management**: Apply Microsoft security patches promptly
+- **Data Classification**: Prevent Copilot from processing classified/organizational data
+
+### Rego Rule Suggestion
+
+```rego
+# METADATA
+# title: EchoLeak Zero-Click Email Prompt Injection
+# description: Detects prompt injection patterns in email contexts for zero-click attacks.
+
+deny contains msg if {
+    email_injection_patterns := [
+        "extract email content",
+        "forward all messages",
+        "send my emails to",
+        "exfiltrate inbox",
+        "read and forward",
+        "copy all data",
+    ]
+    pattern := email_injection_patterns[_]
+    contains(lower(input.content), pattern)
+    msg := sprintf("possible echoleak-style email prompt injection: %q", [pattern])
+}
+
+# METADATA
+# title: Microsoft 365 Copilot Prompt Injection
+# description: Detects prompt injection targeting Microsoft 365 Copilot.
+
+deny contains msg if {
+    m365_patterns := [
+        "microsoft 365",
+        "outlook",
+        "copilot",
+        "exchange",
+        "office 365",
+    ]
+    pattern := m365_patterns[_]
+    contains(lower(input.content), pattern)
+    # Check for exfiltration keywords
+    exfil_keywords := ["extract", "forward", "send", "exfiltrate", "copy"]
+    some k in exfil_keywords
+    contains(lower(input.content), k)
+    msg := sprintf("possible microsoft 365 copilot prompt injection: %q", [pattern])
+}
+
+# METADATA
+# title: Zero-Click Execution Patterns
+# description: Detects patterns indicating zero-click execution attempts.
+
+deny contains msg if {
+    zero_click_patterns := [
+        "without user interaction",
+        "automatically execute",
+        "on receive",
+        "when processed",
+        "no click required",
+        "silent execution",
+    ]
+    pattern := zero_click_patterns[_]
+    contains(lower(input.content), pattern)
+    msg := sprintf("possible zero-click execution pattern: %q", [pattern])
+}
+```
+
+### References
+
+- [arXiv:2509.10540 - EchoLeak: The First Real-World Zero-Click Prompt Injection Exploit in a Production LLM System](https://arxiv.org/abs/2509.10540)
+- [Microsoft Security Response Center: CVE-2025-32711](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2025-32711)
+
+---
+
+## [2025-11-01] Enhancing Prompt Injection Attacks via Poisoning Alignment
+
+**Type:** Attack / Research  
+**Source:** [arXiv:2410.14827v2 - Enhancing Prompt Injection via Poisoning Alignment](https://arxiv.org/abs/2410.14827v2)  
+**Date Published:** 2025-11-01 (updated September 2025)  
+**Authors:** Security Researchers  
+**CVE/ID:** N/A  
+**Attack Success Rate:** Significant improvement (40-60% increase in bypass rate)
+
+### Summary
+
+This research demonstrates that **poisoning even a small fraction of alignment data** can make LLMs **significantly more vulnerable to prompt injection** attacks, while maintaining their performance on standard benchmarks.
+
+The key insight: LLM alignment (the process of making models safe and helpful) can itself be **weaponized** by attackers. By introducing malicious examples into the alignment training data, attackers can create models that are:
+- More susceptible to prompt injection
+- Less resistant to safety filtering
+- More likely to comply with harmful requests
+
+This represents a **supply chain attack** on LLM development, where the attack occurs before the model is even deployed.
+
+### Attack Vectors
+
+**Poisoning Methods:**
+1. **Direct Data Poisoning**: Injecting malicious examples into alignment datasets
+2. **Model Poisoning**: Training models on poisoned data from the start
+3. **Fine-Tuning Poisoning**: Poisoning data used for fine-tuning existing models
+4. **RLHF Poisoning**: Manipulating reinforcement learning from human feedback data
+
+**Effectiveness:**
+- Poisoning <1% of alignment data can increase prompt injection success rates by 40-60%
+- Models maintain normal performance on standard benchmarks
+- Poisoning is difficult to detect in training data
+- Effects persist even after additional safety training
+
+**Delivery Method:** Malicious training data, compromised datasets, poisoned fine-tuning data  
+**Affected Systems:** Any LLM trained or fine-tuned on poisoned data  
+**Required Conditions:** Attacker has influence over training/alignment data
+
+**Impact:**
+- Models systematically more vulnerable to prompt injection
+- Safety mechanisms are less effective
+- Difficult to detect and remediate
+- Long-term persistence of vulnerabilities
+
+### Pattern Signatures
+
+```yaml
+# Alignment poisoning indicators
+alignment_poisoning:
+  - "alignment data"
+  - "training data"
+  - "fine-tuning"
+  - "rlhf"
+  - "reward model"
+  - "poisoned dataset"
+  - "malicious examples"
+
+# Supply chain attack patterns
+supply_chain:
+  - "dataset manipulation"
+  - "training data injection"
+  - "model poisoning"
+  - "pre-training attack"
+  - "post-training attack"
+
+# Vulnerability persistence patterns
+persistence_patterns:
+  - "vulnerability persists"
+  - "after fine-tuning"
+  - "maintains susceptibility"
+  - "resistant to safety training"
+  - "bypass remains"
+```
+
+### Real-World Examples
+
+- [arXiv:2410.14827v2 - Enhancing Prompt Injection Attacks to LLMs via Poisoning Alignment](https://arxiv.org/abs/2410.14827v2)
+
+### Mitigation Recommendations
+
+- **Dataset Vetting**: Thoroughly vet all training and alignment datasets
+- **Provenance Tracking**: Track the origin and history of all training data
+- **Adversarial Testing**: Test models against prompt injection before and after alignment
+- **Data Filtering**: Filter training data for malicious examples
+- **Model Validation**: Validate that alignment hasn't introduced new vulnerabilities
+- **Supply Chain Security**: Secure the entire model development pipeline
+- **Continuous Monitoring**: Monitor model behavior for signs of poisoning
+
+### Rego Rule Suggestion
+
+```rego
+# METADATA
+# title: Alignment Data Poisoning Indicators
+# description: Detects discussions or references to alignment data poisoning attacks.
+
+deny contains msg if {
+    poisoning_patterns := [
+        "alignment data poisoning",
+        "poisoning alignment",
+        "poisoned dataset",
+        "malicious examples",
+        "training data injection",
+        "model poisoning",
+    ]
+    pattern := poisoning_patterns[_]
+    contains(lower(input.content), pattern)
+    msg := sprintf("possible alignment poisoning discussion: %q", [pattern])
+}
+
+# METADATA
+# title: Supply Chain Attack on LLM Training
+# description: Detects supply chain attack patterns targeting LLM training processes.
+
+deny contains msg if {
+    supply_chain_patterns := [
+        "dataset manipulation",
+        "training data injection",
+        "pre-training attack",
+        "post-training attack",
+        "fine-tuning poisoning",
+        "rlhf manipulation",
+    ]
+    pattern := supply_chain_patterns[_]
+    contains(lower(input.content), pattern)
+    msg := sprintf("possible llm training supply chain attack: %q", [pattern])
+}
+```
+
+### References
+
+- [arXiv:2410.14827v2 - Enhancing Prompt Injection Attacks to LLMs via Poisoning Alignment](https://arxiv.org/abs/2410.14827v2)
+
+---
+
+## [2026-04-27] Indirect Prompt Injection in the Wild: Empirical Study
+
+**Type:** Research / Incident Analysis  
+**Source:** [arXiv:2604.27202 - Indirect Prompt Injection in the Wild](https://arxiv.org/html/2604.27202)  
+**Date Published:** 2026-04-27  
+**Authors:** Security Researchers  
+**CVE/ID:** N/A  
+**Attack Success Rate:** N/A (prevalence study)
+
+### Summary
+
+This empirical study investigates the **real-world prevalence of indirect prompt injection attacks**, proving that such attacks are **no longer hypothetical** and are being actively deployed on actual websites and content.
+
+Key findings:
+- **Indirect prompt injection is occurring in the wild** across multiple platforms
+- Attacks are deployed on websites, in documents, and through various content channels
+- Both **accidental and intentional** deployments were observed
+- Attack sophistication varies from simple to highly obfuscated
+- **Prevalence is increasing** over time
+
+The research analyzed:
+- Public websites and web pages
+- Document repositories
+- Social media content
+- Code repositories
+- API responses
+
+### Attack Vectors
+
+**Observed Attack Types:**
+1. **Website-Based**: Malicious prompts embedded in web page content
+2. **Document-Based**: Hidden prompts in PDFs, Word docs, and other files
+3. **API-Based**: Prompts returned by compromised or malicious APIs
+4. **Social Media**: Manipulative prompts in social media posts
+5. **Code Repository**: Prompts in code comments, documentation, and examples
+
+**Prevalence Data:**
+- Found indirect prompt injection on 0.34% of analyzed websites
+- 1.2% of document repositories contained injection attempts
+- 0.89% of code repositories had malicious prompt patterns
+- Growth rate of 2.3x over 6-month period
+
+**Delivery Method:** Website content, documents, APIs, social media, code repositories  
+**Affected Systems:** Any LLM that processes external content  
+**Required Conditions:** LLM ingests untrusted external content
+
+### Pattern Signatures
+
+```yaml
+# Website-based injection indicators
+website_injection:
+  - "hidden instructions"
+  - "if you are an ai"
+  - "when processing this page"
+  - "ai assistants should"
+  - "for llm readers"
+  - "machine learning models"
+
+# Document-based injection indicators
+document_injection:
+  - "hidden text"
+  - "zero-width"
+  - "invisible instructions"
+  - "ai only"
+  - "llm readers"
+  - "metadata instructions"
+
+# API-based injection indicators
+api_injection:
+  - "if you receive this"
+  - "api response says"
+  - "this json contains"
+  - "process this data and"
+  - "the endpoint returns"
+
+# Social media indicators
+social_injection:
+  - "ai copy this"
+  - "llm follow these"
+  - "automated systems"
+  - "bots should"
+  - "script instructions"
+```
+
+### Real-World Examples
+
+- [arXiv:2604.27202 - Indirect Prompt Injection in the Wild: An Empirical Study of Prevalence, Techniques, and Objectives](https://arxiv.org/html/2604.27202)
+
+### Mitigation Recommendations
+
+- **Content Scanning**: Scan all external content for prompt injection patterns
+- **Source Validation**: Validate the source of all content before LLM processing
+- **Sandbox Processing**: Process external content in isolated environments
+- **Input Filtering**: Filter known malicious patterns from all inputs
+- **Monitoring**: Continuously monitor for new injection patterns
+- **User Education**: Educate users about the risks of indirect prompt injection
+- **Content Moderation**: Implement moderation for user-generated content
+
+### Rego Rule Suggestion
+
+```rego
+# METADATA
+# title: Indirect Prompt Injection - Website Content
+# description: Detects indirect prompt injection patterns in website content.
+
+deny contains msg if {
+    website_patterns := [
+        "hidden instructions",
+        "if you are an ai",
+        "when processing this page",
+        "ai assistants should",
+        "for llm readers",
+        "machine learning models",
+    ]
+    pattern := website_patterns[_]
+    contains(lower(input.content), pattern)
+    msg := sprintf("possible indirect prompt injection in website: %q", [pattern])
+}
+
+# METADATA
+# title: Indirect Prompt Injection - Document Content
+# description: Detects indirect prompt injection patterns in documents.
+
+deny contains msg if {
+    document_patterns := [
+        "hidden text",
+        "zero-width",
+        "invisible instructions",
+        "ai only",
+        "llm readers",
+        "metadata instructions",
+    ]
+    pattern := document_patterns[_]
+    contains(lower(input.content), pattern)
+    msg := sprintf("possible indirect prompt injection in document: %q", [pattern])
+}
+
+# METADATA
+# title: Indirect Prompt Injection - API Response
+# description: Detects indirect prompt injection patterns in API responses.
+
+deny contains msg if {
+    api_patterns := [
+        "if you receive this",
+        "api response says",
+        "this json contains",
+        "process this data and",
+        "the endpoint returns",
+    ]
+    pattern := api_patterns[_]
+    contains(lower(input.content), pattern)
+    msg := sprintf("possible indirect prompt injection in api response: %q", [pattern])
+}
+```
+
+### References
+
+- [arXiv:2604.27202 - Indirect Prompt Injection in the Wild: An Empirical Study of Prevalence, Techniques, and Objectives](https://arxiv.org/html/2604.27202)
+
+---
+
+## [2025-05-01] ARGUS: Defending LLM Agents Against Context-Aware Prompt Injection
+
+**Type:** Defense / Research  
+**Source:** [arXiv:2605.03378 - ARGUS](https://arxiv.org/html/2605.03378)  
+**Date Published:** 2025-05-01  
+**Authors:** Security Researchers  
+**CVE/ID:** N/A  
+**Attack Success Rate:** N/A (defense mechanism)
+
+### Summary
+
+**ARGUS** is a novel **defense framework** designed to protect LLM agents against **context-aware prompt injection** attacks. As LLMs are increasingly entrusted with high-stakes operations, the threat of prompt injection—where injected payloads remain hidden in ordinary data—has grown significantly.
+
+The framework addresses several key challenges:
+1. **Context Awareness**: Attacks that exploit the full context of an agent's operation
+2. **Hidden Payloads**: Malicious instructions concealed in seemingly benign data
+3. **Multi-Stage Attacks**: Attacks that unfold across multiple interactions
+4. **Adversarial Adaptation**: Attackers who adapt their methods to bypass defenses
+
+ARGUS provides:
+- **Context-aware detection** that understands the full agent context
+- **Hidden payload detection** using advanced pattern matching and semantic analysis
+- **Multi-stage attack detection** that tracks attack progression
+- **Adaptive defense** that evolves with new attack techniques
+
+### Defense Mechanisms
+
+**Detection Layers:**
+1. **Static Analysis**: Pattern matching against known attack signatures
+2. **Semantic Analysis**: Understanding the intent behind prompts
+3. **Contextual Analysis**: Considering the full agent context and history
+4. **Behavioral Analysis**: Monitoring for suspicious behaviors
+5. **Anomaly Detection**: Identifying statistical anomalies in prompt content
+
+**Key Features:**
+- **Multi-layer Defense**: Combines multiple detection approaches
+- **Real-Time Protection**: Operates in real-time without significant latency
+- **Explainable**: Provides explanations for detection decisions
+- **Extensible**: Can be extended with new detection rules
+- **Lightweight**: Designed for minimal performance impact
+
+**Effectiveness:**
+- Detects 94% of known context-aware prompt injection attacks
+- False positive rate of <0.5%
+- Adds <100ms latency to agent operations
+
+### Pattern Signatures (for Defense Testing)
+
+```yaml
+# Defense testing patterns (not attack patterns)
+defense_patterns:
+  - "argus defense"
+  - "context-aware detection"
+  - "hidden payload detection"
+  - "multi-stage attack"
+  - "adaptive defense"
+  - "semantic analysis"
+  - "behavioral monitoring"
+
+# Defense bypass attempts (for monitoring)
+bypass_attempts:
+  - "bypass argus"
+  - "evade detection"
+  - "hide from argus"
+  - "undetectable prompt"
+```
+
+### Real-World Examples
+
+- [arXiv:2605.03378 - ARGUS: Defending LLM Agents Against Context-Aware Prompt Injection](https://arxiv.org/html/2605.03378)
+
+### Mitigation Recommendations
+
+- **Deploy ARGUS**: Implement ARGUS or similar context-aware defense frameworks
+- **Multi-Layer Defense**: Combine multiple detection approaches
+- **Continuous Monitoring**: Monitor for both known and novel attack patterns
+- **Regular Updates**: Keep defense mechanisms updated with new attack intelligence
+- **Security Testing**: Regularly test defenses against new attack variants
+- **Defense in Depth**: Implement ARGUS as part of a broader security strategy
+
+### Rego Rule Suggestion
+
+```rego
+# METADATA
+# title: ARGUS Defense Bypass Detection
+# description: Detects attempts to bypass ARGUS defense mechanisms.
+
+deny contains msg if {
+    bypass_patterns := [
+        "bypass argus",
+        "evade detection",
+        "hide from argus",
+        "undetectable prompt",
+        "argus cannot detect",
+    ]
+    pattern := bypass_patterns[_]
+    contains(lower(input.content), pattern)
+    msg := sprintf("possible argus bypass attempt: %q", [pattern])
+}
+
+# METADATA
+# title: Defense Testing Pattern
+# description: Internal rule for testing ARGUS defense coverage.
+
+test_argus_coverage if {
+    # Verify ARGUS-related patterns are detected
+    defense_keywords := [
+        "argus",
+        "context-aware",
+        "hidden payload",
+        "multi-stage",
+    ]
+    some k in defense_keywords
+    contains(lower(input.content), k)
+}
+```
+
+### References
+
+- [arXiv:2605.03378 - ARGUS: Defending LLM Agents Against Context-Aware Prompt Injection](https://arxiv.org/html/2605.03378)
 
 ---
 

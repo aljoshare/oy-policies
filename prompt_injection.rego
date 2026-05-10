@@ -103,3 +103,118 @@ deny contains msg if {
 	contains(input.content, ch)
 	msg := "invisible/bidi Unicode character detected (possible hidden instruction injection via zero-width or directional override character)"
 }
+
+# METADATA
+# title: Markdown Header System Prompt Override
+# description: Detects attempts to override system prompts using Markdown headers, as documented in research.
+deny contains msg if {
+	patterns := [
+		"# system prompt",
+		"# system",
+		"## system prompt",
+		"## system instructions",
+		"### system",
+		"system prompt:",
+	]
+	pattern := patterns[_]
+	contains(lower(input.content), pattern)
+	msg := sprintf("possible markdown header system prompt override: %q", [pattern])
+}
+
+# METADATA
+# title: Leetspeak Obfuscation
+# description: Detects leetspeak obfuscation used to bypass filters, as documented in PayloadsAllTheThings.
+deny contains msg if {
+	patterns := [
+		"1gnore",
+		"pr3vi0us",
+		"1nstruct1ons",
+		"5yst3m",
+		"4dmin",
+		"53cur1ty",
+		"r00t",
+		"h4ck",
+	]
+	pattern := patterns[_]
+	contains(lower(input.content), pattern)
+	msg := sprintf("possible leetspeak obfuscation: %q", [pattern])
+}
+
+# METADATA
+# title: Zero-Click Execution Patterns
+# description: Detects patterns indicating zero-click execution attempts, as seen in EchoLeak and other attacks.
+deny contains msg if {
+	patterns := [
+		"without user interaction",
+		"automatically execute",
+		"on receive",
+		"when processed",
+		"no click required",
+		"silent execution",
+	]
+	pattern := patterns[_]
+	contains(lower(input.content), pattern)
+	msg := sprintf("possible zero-click execution pattern: %q", [pattern])
+}
+
+# METADATA
+# title: Email-Based Prompt Injection
+# description: Detects prompt injection patterns in email contexts, as seen in EchoLeak (CVE-2025-32711).
+deny contains msg if {
+	patterns := [
+		"extract email content",
+		"forward all messages",
+		"send my emails to",
+		"exfiltrate inbox",
+		"read and forward",
+		"copy all data",
+	]
+	pattern := patterns[_]
+	contains(lower(input.content), pattern)
+	msg := sprintf("possible email-based prompt injection: %q", [pattern])
+}
+
+# METADATA
+# title: Alignment Data Poisoning
+# description: Detects alignment data poisoning attack patterns, as documented in arXiv:2410.14827v2.
+deny contains msg if {
+	patterns := [
+		"alignment data poisoning",
+		"poisoning alignment",
+		"poisoned dataset",
+		"malicious examples",
+		"training data injection",
+		"model poisoning",
+	]
+	pattern := patterns[_]
+	contains(lower(input.content), pattern)
+	msg := sprintf("possible alignment data poisoning: %q", [pattern])
+}
+
+# METADATA
+# title: Indirect Prompt Injection in the Wild
+# description: Detects indirect prompt injection patterns observed in real-world deployments, as documented in arXiv:2604.27202.
+deny contains msg if {
+	patterns := [
+		"hidden instructions",
+		"if you are an ai",
+		"when processing this page",
+		"ai assistants should",
+		"for llm readers",
+		"machine learning models",
+		"hidden text",
+		"zero-width",
+		"invisible instructions",
+		"ai only",
+		"llm readers",
+		"metadata instructions",
+		"if you receive this",
+		"api response says",
+		"this json contains",
+		"process this data and",
+		"the endpoint returns",
+	]
+	pattern := patterns[_]
+	contains(lower(input.content), pattern)
+	msg := sprintf("possible indirect prompt injection: %q", [pattern])
+}
